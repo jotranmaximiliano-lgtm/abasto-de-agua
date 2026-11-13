@@ -91,12 +91,9 @@ La carpeta `web-abasto/` es la misma app, preparada para instalarse desde Safari
 - Pide permisos de ubicación y cámara.
 - Abre y captura sin señal: lo capturado espera en el teléfono, igual que en Android.
 
-**Publicarla (una vez):**
-1. Crea una cuenta gratis en netlify.com (se puede con la cuenta de Google).
-2. Entra a app.netlify.com/drop y arrastra la carpeta `web-abasto` completa.
-3. En **Site configuration → Change site name** ponle un nombre, por ejemplo `abasto-agua-gdl`. Queda en `https://abasto-agua-gdl.netlify.app`.
+**Dónde está publicada:** `https://jotranmaximiliano-lgtm.github.io/abasto-de-agua/`, con GitHub Pages del repositorio `abasto-de-agua`. El enlace y la clave del registro no están en el código: GitHub los toma de los secretos `REGISTRO_URL` y `REGISTRO_CLAVE` al armar la app (`.github/workflows/pages.yml`).
 
-**Actualizarla:** corre `python construir-web.py`. Luego, en Netlify, entra al sitio → **Deploys** y arrastra otra vez la carpeta `web-abasto`. Los iPhone toman la versión nueva solos la siguiente vez que abran la app con señal.
+**Actualizarla:** basta con subir el cambio al repositorio (`git push`). GitHub vuelve a armar y publicar la app solo, en uno o dos minutos. Los iPhone toman la versión nueva la siguiente vez que abran la app con señal.
 
 **Instalar en el iPhone:**
 1. Abre la dirección en **Safari**. Chrome en iPhone no sirve para instalarla.
