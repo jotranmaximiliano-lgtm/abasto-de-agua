@@ -1,0 +1,43 @@
+# Publica la app web (la que se instala en iPhone) en GitHub Pages cada vez que se sube un cambio.
+# El enlace y la clave del registro no están en el repositorio: vienen de los secretos
+# REGISTRO_URL y REGISTRO_CLAVE (Settings → Secrets and variables → Actions).
+name: Publicar app web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Armar la app web
+        env:
+          REGISTRO_URL: ${{ secrets.REGISTRO_URL }}
+          REGISTRO_CLAVE: ${{ secrets.REGISTRO_CLAVE }}
+        run: |
+          printf '%s\n%s\n' "$REGISTRO_URL" "$REGISTRO_CLAVE" > registro-enlace.txt
+          python construir-web.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web-abasto
+      - id: deploy
+        uses: actions/deploy-pages@v4

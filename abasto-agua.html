@@ -1,0 +1,722 @@
+<title>Abasto de Agua</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Misma línea visual que la app Toma datos: barra roja con chevrones, tarjetas y barra de acción fija abajo */
+:root{
+  --bg:#ECEEF1; --surface:#FFFFFF; --surface-2:#F4F5F7; --ink:#15181C; --muted:#5A6270; --line:#D3D8DE;
+  --red:#C3132B; --red-ink:#FFFFFF; --red-soft:#FBE6E9; --amber:#9A6A00; --amber-soft:#FFF1CC; --ok:#1C7347; --ok-soft:#DCF0E4;
+  --water:#1E6FD9; --water-soft:#E3EEFC;
+  --chev:#FFFFFF; --shadow:0 1px 2px rgba(20,24,28,.06),0 4px 14px rgba(20,24,28,.06);
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101215; --surface:#1A1D22; --surface-2:#22262C; --ink:#EDEFF2; --muted:#9BA3AF; --line:#30353D;
+  --red:#E3384C; --red-ink:#FFFFFF; --red-soft:#3A1C22; --amber:#FFC94D; --amber-soft:#3A3120; --ok:#52C78F; --ok-soft:#163325;
+  --water:#6AA9F5; --water-soft:#18283D; --chev:#E9ECEF; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#101215; --surface:#1A1D22; --surface-2:#22262C; --ink:#EDEFF2; --muted:#9BA3AF; --line:#30353D;
+  --red:#E3384C; --red-ink:#FFFFFF; --red-soft:#3A1C22; --amber:#FFC94D; --amber-soft:#3A3120; --ok:#52C78F; --ok-soft:#163325;
+  --water:#6AA9F5; --water-soft:#18283D; --chev:#E9ECEF; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.band{background:var(--red);color:var(--red-ink)}
+.band .wrap{padding-block:18px 16px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand .logo{width:56px;height:56px;flex:none}
+.brand h1{font-family:var(--f-disp);font-weight:700;font-size:2rem;line-height:1;letter-spacing:.02em;margin:0;text-transform:uppercase}
+.brand p{margin:4px 0 0;font-size:.92rem;opacity:.92}
+.chev{height:9px;background:repeating-linear-gradient(-45deg,var(--red) 0 9px,var(--chev) 9px 18px)}
+.iconbtn{background:transparent;border:1.5px solid currentColor;border-radius:10px;color:inherit;padding:8px 10px;font-weight:600;font-size:.9rem}
+.topbar{position:sticky;top:0;z-index:500;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
+.topbar h2{flex:1;min-width:0;margin:0;font-family:var(--f-disp);font-weight:700;font-size:1.25rem;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back{border:0;background:var(--surface-2);border-radius:10px;width:42px;height:42px;display:grid;place-items:center;flex:none;font-size:1.3rem}
+main{padding-block:18px 120px;display:grid;gap:18px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 10px}
+.sec-h h3{margin:0;font-family:var(--f-disp);font-size:1.3rem;letter-spacing:.03em;text-transform:uppercase}
+.sec-h span{font-size:.85rem;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;display:grid;gap:12px}
+.note{background:var(--amber-soft);border-radius:12px;padding:10px 12px;font-size:.9rem}
+.ok{background:var(--ok-soft);border-radius:12px;padding:10px 12px;font-size:.9rem}
+.agua{background:var(--water-soft);border-radius:12px;padding:10px 12px;font-size:.95rem}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 13px;font-weight:600;font-size:.92rem}
+.btn.red{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+.btn.ghost{background:transparent}
+.btn.big{padding:15px 18px;font-size:1.1rem;border-radius:12px}
+.btn[disabled]{opacity:.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.g2{grid-template-columns:1fr}}
+.fld{display:grid;gap:6px;min-width:0}
+.lbl{font-size:.76rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.lbl em{font-style:normal;font-weight:500;text-transform:none;letter-spacing:0}
+.hint{font-size:.82rem;color:var(--muted)}
+input,select,textarea{width:100%;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:16px}
+input:focus,textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+textarea{min-height:70px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-size:.98rem;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:var(--red-ink)}
+.chip.grande{padding:12px 16px;border-radius:12px;font-weight:600}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);font-size:1.5rem;font-weight:700}
+.stepper output{min-width:48px;text-align:center;font-family:var(--f-mono);font-size:1.4rem}
+.total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:var(--f-disp);font-size:1.5rem;letter-spacing:.02em}
+.total b{font-size:2rem;color:var(--water)}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;vertical-align:2px}
+.pill.corte{background:var(--red-soft);color:var(--red)}
+.pill.con{background:var(--ok-soft);color:var(--ok)}
+.pill.pend{background:var(--amber-soft);color:var(--amber)}
+.lista{display:grid;gap:10px}
+.ent{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:4px}
+.ent b{font-family:var(--f-disp);font-size:1.12rem;letter-spacing:.02em}
+.ent .meta{font-size:.86rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 12px}
+.ent .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.empty{border:1.5px dashed var(--line);border-radius:14px;padding:18px;color:var(--muted);text-align:center}
+.cifras{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cifra{background:var(--surface-2);border-radius:12px;padding:10px;text-align:center}
+.cifra b{display:block;font-family:var(--f-disp);font-size:1.6rem;line-height:1.1}
+.cifra span{font-size:.78rem;color:var(--muted)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:600;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar .wrap{display:flex;gap:10px;padding-block:10px}
+.bar .grow{flex:1}
+.mapa{height:46vh;min-height:280px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:var(--surface-2)}
+.mapa.alto{height:68vh}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem}
+.ley{display:inline-flex;align-items:center;gap:6px}
+.ley i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.ley i.dot{border-radius:50%}
+.zonas-hoy{display:grid;grid-template-columns:repeat(auto-fit,minmax(36px,1fr));gap:4px;font-size:.78rem;text-align:center}
+.zonas-hoy span{border-radius:8px;padding:6px 2px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.zonas-hoy span.con{opacity:.35}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:.92rem;z-index:900;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+.leaflet-control-layers-toggle{background-image:none!important;width:auto!important;height:auto!important;padding:5px 9px;color:#222;font:600 13px/1.2 sans-serif;text-decoration:none}
+.leaflet-control-layers-toggle::after{content:'Mapa'}
+.capas .leaflet-control-layers-toggle::after{content:'Capas'}
+.leaflet-control-layers label{display:flex;align-items:center;gap:6px;padding:3px 0;color:#222;font-size:13px}
+.leaflet-control-layers input{width:auto;padding:0;margin:0;flex:none}
+.fotos{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.foto{position:relative;margin:0;width:84px;height:84px;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto .quitar{position:absolute;top:3px;right:3px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:1.1rem;line-height:1;padding:0}
+.leaflet-popup-content{font-family:var(--f-body);font-size:14px;line-height:1.4}
+</style>
+
+<div id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="foto-in" accept="image/*" capture="environment" hidden>
+<script src="siapa-datos.js"></script>
+<script>
+'use strict';
+/* ============ Utilidades ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const hoyIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const ahora = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fCorta = iso => { const [y, m, d] = iso.split('-'); return `${d}/${m}/${y.slice(2)}`; };
+const fLarga = iso => { const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
+const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+const DIA_TXT = { lunes: 'lunes', martes: 'martes', miercoles: 'miércoles', jueves: 'jueves', viernes: 'viernes', sabado: 'sábado', domingo: 'domingo' };
+const diaDe = iso => DIAS[new Date(iso + 'T12:00').getDay()];
+const miles = n => Number(n || 0).toLocaleString('es-MX');
+const APP = !!window.AB_APP;
+const LOGO = window.AB_LOGO || '';
+let toastT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2400); }
+function copiar(t) { try { navigator.clipboard.writeText(t).then(() => toast('Texto copiado'), () => toast('No se pudo copiar')); } catch (e) { toast('No se pudo copiar'); } }
+
+/* ============ Datos guardados en el teléfono ============ */
+/* Cada base tiene su pipa; todas son de 9,000 L */
+const PIPA_DE = { 'Base 1': '8442', 'Base 2': '8444', 'Base 3': '8445', 'Base 4': '8446', 'Base 5': '8443' };
+const BASES = Object.keys(PIPA_DE);
+const CAPACIDAD = 9000;
+const ALMAC = [
+  { id: 'garrafon', txt: 'Garrafón', plural: 'garrafones' },
+  { id: 'tinaco', txt: 'Tinaco', plural: 'tinacos' },
+  { id: 'aljibe', txt: 'Aljibe', plural: 'aljibes' },
+  { id: 'cisterna', txt: 'Cisterna', plural: 'cisternas' },
+  { id: 'otro', txt: 'Otro', plural: 'recipientes' },
+  { id: 'recipientes', txt: 'Recipientes', plural: 'recipientes', soloPunto: true } // la gente llega con sus recipientes al punto de llenado
+];
+const TINACOS = [450, 750, 1100];
+const COLOR_BASE = { 1: '#B05CC6', 2: '#C99A00', 3: '#4E9A2E', 4: '#6E7B87', 5: '#E07020' };
+const CLAVE_LS = 'abasto.v1';
+let DB = { turno: {}, cfg: {}, entregas: [], puntos: [], fotos: {}, borrar: [] };
+let guardaOK = true;
+function cargar() {
+  try { const o = JSON.parse(localStorage.getItem(CLAVE_LS) || 'null'); if (o) DB = { turno: o.turno || {}, cfg: o.cfg || {}, entregas: o.entregas || [], puntos: o.puntos || [], fotos: o.fotos || {}, borrar: o.borrar || [] }; }
+  catch (e) { guardaOK = false; }
+  const t = DB.turno; t.pipa = PIPA_DE[t.base] || ''; delete t.punto; delete t.capacidad;
+}
+function guardar() { try { localStorage.setItem(CLAVE_LS, JSON.stringify(DB)); } catch (e) { guardaOK = false; } }
+const registroURL = () => ((window.AB_REGISTRO && window.AB_REGISTRO.url) || '').trim();
+const registroClave = () => ((window.AB_REGISTRO && window.AB_REGISTRO.clave) || '').trim();
+
+/* ============ Fotos de evidencia ============ */
+/* La imagen va en IndexedDB (localStorage no alcanza); en DB.fotos solo queda si ya se subió y su liga */
+let idbP;
+const idb = () => idbP || (idbP = new Promise((ok, no) => {
+  const r = indexedDB.open('abasto', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('fotos');
+  r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+}));
+async function fotoPut(id, data) { const d = await idb(); return new Promise((ok, no) => { const t = d.transaction('fotos', 'readwrite'); t.objectStore('fotos').put(data, id); t.oncomplete = ok; t.onerror = () => no(t.error); }); }
+async function fotoGet(id) { const d = await idb(); return new Promise((ok, no) => { const r = d.transaction('fotos').objectStore('fotos').get(id); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); }
+async function fotoDel(id) { const d = await idb(); return new Promise(ok => { const t = d.transaction('fotos', 'readwrite'); t.objectStore('fotos').delete(id); t.oncomplete = ok; t.onerror = ok; }); }
+const fotoCache = {};
+/* Se reduce a 1280 px y calidad media: unos 200 KB, para que suba aunque haya poca señal */
+async function comprimir(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+    const k = Math.min(1, 1280 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.6);
+  } finally { URL.revokeObjectURL(url); }
+}
+function fotosHTML(ids, para) {
+  return `<div class="fotos">${(ids || []).map(id => `<figure class="foto"><img data-foto="${id}" alt="Foto de evidencia"><button type="button" class="quitar" data-quitafoto="${id}" data-para="${para}" aria-label="Quitar foto">×</button></figure>`).join('')}<button type="button" class="btn" data-tomarfoto="${para}">Tomar foto</button></div>`;
+}
+async function hidratarFotos() {
+  for (const img of document.querySelectorAll('img[data-foto]')) {
+    if (img.getAttribute('src')) continue;
+    const id = img.dataset.foto, d = fotoCache[id] || await fotoGet(id).catch(() => null);
+    if (d) { fotoCache[id] = d; img.src = d; }
+  }
+}
+const fotosUrl = ids => (ids || []).map(id => (DB.fotos[id] || {}).url).filter(Boolean);
+/* Fotos por subir y a qué renglones pertenecen (solo cuando esos renglones ya están en la hoja) */
+function fotosPorSubir() {
+  const out = [];
+  DB.entregas.forEach(e => (e.fotos || []).forEach(id => { const m = DB.fotos[id]; if (m && !m.subida && e.enviado) out.push({ id, fecha: fLarga(e.fecha), ids: [e.id] }); }));
+  DB.puntos.forEach(p => (p.fotos || []).forEach(id => {
+    const m = DB.fotos[id], ids = DB.entregas.filter(e => e.punto === p.id && e.enviado).map(e => e.id);
+    if (m && !m.subida && ids.length) out.push({ id, fecha: fLarga(p.fecha), ids });
+  }));
+  return out;
+}
+
+/* ============ Zonas del SIAPA y colonias ============ */
+const SI = window.SIAPA;
+const pt = (r, i) => [SI.lat0 + r[i] / SI.esc, SI.lon0 + r[i + 1] / SI.esc];
+const anilloLL = r => { const o = []; for (let i = 0; i < r.length; i += 2) o.push(pt(r, i)); return o; };
+function dentro(lat, lon, r) {
+  let si = false;
+  for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+    const yi = SI.lat0 + r[i] / SI.esc, xi = SI.lon0 + r[i + 1] / SI.esc, yj = SI.lat0 + r[j] / SI.esc, xj = SI.lon0 + r[j + 1] / SI.esc;
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) si = !si;
+  }
+  return si;
+}
+const enPoligono = (lat, lon, pol) => dentro(lat, lon, pol[0]) && !pol.slice(1).some(h => dentro(lat, lon, h));
+/* Caja de cada colonia para descartar rápido */
+const CAJAS = SI.colonias.r.map(rs => { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; rs.forEach(r => { for (let i = 0; i < r.length; i += 2) { a = Math.min(a, r[i]); b = Math.max(b, r[i]); c = Math.min(c, r[i + 1]); d = Math.max(d, r[i + 1]); } }); return [a, b, c, d]; });
+function lugarDe(lat, lon) {
+  const zona = SI.zonas.find(z => z.p.some(p => enPoligono(lat, lon, p)));
+  const y = (lat - SI.lat0) * SI.esc, x = (lon - SI.lon0) * SI.esc;
+  let col = null;
+  for (let i = 0; i < CAJAS.length; i++) {
+    const k = CAJAS[i]; if (y < k[0] || y > k[1] || x < k[2] || x > k[3]) continue;
+    if (SI.colonias.r[i].some(r => dentro(lat, lon, r))) { col = i; break; }
+  }
+  /* Base o módulo que cubre el punto (si cae en un módulo, ese; si no, la base) */
+  const cobs = SI.coberturas.filter(c => c.p.some(r => dentro(lat, lon, r)));
+  const cob = cobs.find(c => c.modulo) || cobs[0];
+  return {
+    cobertura: cob ? cob.nombre : '',
+    zona: zona ? zona.z : '', zonaNombre: zona ? zona.nombre : '',
+    colonia: col == null ? '' : titulo(SI.colonias.n[col]), municipio: col == null ? '' : SI.colonias.m[col]
+  };
+}
+const titulo = s => String(s || '').toLowerCase().replace(/(^|[\s.(])(\S)/g, (_, a, b) => a + b.toUpperCase()).replace(/\b(De|Del|La|Las|Los|El|Y)\b/g, w => w.toLowerCase()).replace(/^./, c => c.toUpperCase());
+const sinServicio = (z, iso) => !!z && (SI.dias[z] || []).includes(diaDe(iso));
+const diasTxt = z => (SI.dias[z] || []).map(d => DIA_TXT[d]).join(', ');
+/* Zona por nombre de colonia, cuando no hay GPS */
+function zonaPorColonia(nombre) {
+  const k = norm(nombre); if (!k) return '';
+  const i = SI.colonias.n.findIndex(n => norm(n) === k);
+  return i < 0 ? '' : String(SI.colonias.z[i] || '').split(',')[0];
+}
+
+/* ============ Estado de la pantalla ============ */
+const S = { view: 'home', e: null, p: null, pf: null, gps: 'nada', mapa: null, todas: null, verTodas: false, fotoPara: '' };
+
+/* Entrega nueva: si se pide «aquí mismo», hereda lugar y ubicación de la anterior */
+function nuevaEntrega(aqui) {
+  const t = DB.turno, prev = aqui ? DB.entregas[DB.entregas.length - 1] : null;
+  const e = { id: uid(), fecha: hoyIso(), hora: ahora(), tipoLugar: 'casa', lugar: '', domicilio: '', colonia: '', municipio: '', zona: '', recibe: '', telefono: '',
+    almac: '', cantidad: 1, tamano: 0, litros: 0, notas: '', gps: null, enviado: false };
+  if (prev) ['tipoLugar', 'lugar', 'colonia', 'municipio', 'zona', 'cobertura', 'gps', 'almac', 'tamano'].forEach(k => { e[k] = prev[k]; });
+  if (e.almac === 'aljibe' || e.almac === 'cisterna' || e.almac === 'otro') e.litros = 0;
+  return e;
+}
+function litrosDe(e) {
+  if (e.almac === 'garrafon') return 20 * (e.cantidad || 0);
+  if (e.almac === 'tinaco') return (e.tamano || 0) * (e.cantidad || 0);
+  return +e.litros || 0;
+}
+function almacTxt(e) {
+  const a = ALMAC.find(x => x.id === e.almac); if (!a) return '';
+  const n = e.cantidad || 1;
+  if (e.almac === 'garrafon') return `${n} ${n === 1 ? 'garrafón' : 'garrafones'} de 20 L`;
+  if (e.almac === 'tinaco') return `${n} ${n === 1 ? 'tinaco' : 'tinacos'} de ${miles(e.tamano)} L`;
+  return a.txt;
+}
+function tomarGPS(e) {
+  if (!navigator.geolocation) { S.gps = 'sin'; pintarUbic(); return; }
+  S.gps = 'buscando'; pintarUbic();
+  navigator.geolocation.getCurrentPosition(p => {
+    if (S.e !== e && S.p !== e) return;
+    e.gps = { lat: +p.coords.latitude.toFixed(6), lon: +p.coords.longitude.toFixed(6), prec: Math.round(p.coords.accuracy) };
+    const l = lugarDe(e.gps.lat, e.gps.lon);
+    e.zona = l.zona; e.cobertura = l.cobertura; if (l.colonia) { e.colonia = l.colonia; e.municipio = l.municipio; }
+    S.gps = 'ok'; pintarUbic(); const c = $('#f-colonia'); if (c && l.colonia) c.value = e.colonia;
+  }, () => { if (S.e !== e && S.p !== e) return; S.gps = 'error'; pintarUbic(); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+
+const unidadTxt = t => [t.pipa ? `Pipa ${t.pipa}` : '', t.base ? `(${t.base})` : ''].filter(Boolean).join(' ');
+
+/* ============ Registro en Drive (hoja de Google con Apps Script) ============ */
+function filaRegistro(e) {
+  const t = DB.turno;
+  /* «fecha» elige la pestaña del día en la hoja; no es columna */
+  return { fecha: fLarga(e.fecha), 'Hora': e.hora, 'Base': t.base || '', 'Pipa': t.pipa || '', 'Chofer': t.chofer || '', 'Bombero': t.bombero || '',
+    'Lugar o institución': e.tipoLugar === 'lugar' ? e.lugar : '', 'Recibe': e.recibe, 'Teléfono': e.telefono, 'Domicilio': e.domicilio, 'Colonia': e.colonia,
+    'Almacenamiento': (ALMAC.find(a => a.id === e.almac) || {}).txt || '', 'Cantidad': e.almac === 'garrafon' || e.almac === 'tinaco' ? almacTxt(e) : '', 'Litros': litrosDe(e),
+    'Ubicación': e.gps ? `https://maps.google.com/?q=${e.gps.lat},${e.gps.lon}` : '',
+    'Fotos': [...fotosUrl(e.fotos), ...fotosUrl((DB.puntos.find(x => x.id === e.punto) || {}).fotos)].join('\n'), 'Notas': e.notas, id: e.id };
+}
+let enviando = false;
+/* Se intenta leer la respuesta; si el navegador no deja, se manda igual sin leerla (el registro ignora repetidos) */
+async function postRegistro(cuerpo) {
+  const opts = { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ clave: registroClave(), ...cuerpo }) };
+  try { const r = await fetch(registroURL(), opts); return await r.json(); }
+  catch (err) { await fetch(registroURL(), { ...opts, mode: 'no-cors' }); return { ok: true }; }
+}
+const pendientes = () => DB.entregas.filter(e => !e.enviado).length + DB.borrar.length + fotosPorSubir().length;
+async function enviarPendientes(silencio) {
+  if (!registroURL() || enviando || !pendientes()) return;
+  if (!navigator.onLine) { if (!silencio) toast('Sin señal: se envían solas cuando regrese'); return; }
+  enviando = true;
+  try {
+    const pend = DB.entregas.filter(e => !e.enviado), borrar = DB.borrar.slice();
+    if (pend.length || borrar.length) {
+      const r = await postRegistro({ entregas: pend.map(filaRegistro), borrar });
+      if (!r.ok) throw new Error(r.error);
+      pend.forEach(e => { e.enviado = true; }); DB.borrar = DB.borrar.filter(x => !borrar.includes(x)); guardar();
+    }
+    for (const f of fotosPorSubir()) {
+      const data = fotoCache[f.id] || await fotoGet(f.id).catch(() => null);
+      if (!data) { DB.fotos[f.id].subida = true; continue; } // la imagen ya no está en el teléfono
+      const r = await postRegistro({ fotos: [{ ...f, base64: data.split(',')[1] }] });
+      if (!r.ok) throw new Error(r.error);
+      DB.fotos[f.id] = { subida: true, url: (r.urls || {})[f.id] || '' }; guardar();
+    }
+    if (!silencio) toast('Todo enviado al registro');
+  } catch (err) { if (!silencio) toast('No se pudo enviar. Se reintenta solo.'); }
+  enviando = false;
+  if (S.view === 'home') render(false);
+}
+window.addEventListener('online', () => enviarPendientes(true));
+setInterval(() => enviarPendientes(true), 120000);
+
+/* ============ Vistas ============ */
+const hoyLista = () => DB.entregas.filter(e => e.fecha === hoyIso());
+function zonasHoyHTML(iso) {
+  return `<div class="zonas-hoy" aria-label="Zonas sin servicio hoy">${SI.zonas.slice().sort((a, b) => a.z - b.z).map(z => `<span class="${sinServicio(z.z, iso) ? '' : 'con'}" style="background:${z.color}" title="Zona ${z.z} · ${esc(z.nombre)}">Z${z.z}</span>`).join('')}</div>`;
+}
+/* Versión web abierta en el navegador (no instalada): cómo dejarla como app en el teléfono */
+function avisoInstalar() {
+  const instalada = navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (!window.AB_WEB || instalada) return '';
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+    return '<div class="note"><b>Instálala en tu iPhone:</b> en Safari toca <b>Compartir</b> (el cuadro con la flecha hacia arriba) y luego <b>«Agregar a inicio»</b>. Después ábrela siempre desde ese ícono.</div>';
+  if (/Android/.test(navigator.userAgent))
+    return '<div class="note"><b>Instálala en tu teléfono:</b> en Chrome toca el menú <b>⋮</b> y luego <b>«Instalar app»</b> o «Agregar a pantalla principal».</div>';
+  return '';
+}
+function viewHome() {
+  const t = DB.turno, lista = hoyLista().slice().reverse(), tot = lista.reduce((s, e) => s + litrosDe(e), 0);
+  const pend = pendientes();
+  const iso = hoyIso(), cortes = SI.zonas.filter(z => sinServicio(z.z, iso)).map(z => z.z).sort();
+  return `<header class="band"><div class="wrap"><div class="brand">${LOGO ? `<img class="logo" src="${LOGO}" alt="">` : ''}<div><h1>Abasto de agua</h1><p>${t.pipa ? esc(unidadTxt(t)) : 'Tandeos SIAPA · registro de entregas'}</p></div></div></div></header><div class="chev"></div>
+  <main class="wrap">
+    ${guardaOK ? '' : '<div class="note">Este navegador no deja guardar datos: lo que captures se pierde al cerrar.</div>'}
+    ${avisoInstalar()}
+    ${t.pipa ? '' : '<div class="note">Antes de empezar, elige tu base y pon tu nombre. Solo se hace una vez por turno.</div>'}
+    <section class="card">
+      <div class="sec-h" style="margin:0"><h3>Mi turno</h3><button type="button" class="btn ghost" data-go="turno">${t.pipa ? 'Cambiar' : 'Poner datos'}</button></div>
+      ${t.pipa ? `<div class="meta">${esc([unidadTxt(t), t.chofer && 'Chofer ' + t.chofer, t.bombero && 'Bombero ' + t.bombero].filter(Boolean).join(' · '))}</div>` : ''}
+    </section>
+    <div class="row"><button type="button" class="btn red big" style="flex:1" data-act="nueva">+ Entrega a domicilio</button><button type="button" class="btn big" style="flex:1" data-act="punto">+ Punto de llenado</button></div>
+    <span class="hint" style="margin-top:-8px">Punto de llenado: la pipa se queda en un lugar y la gente llega con sus recipientes.</span>
+    <section class="card">
+      <div class="sec-h" style="margin:0"><h3>Hoy</h3><span>${esc(titulo(DIA_TXT[diaDe(iso)]))} ${fCorta(iso)}</span></div>
+      <div class="cifras"><div class="cifra"><b>${lista.length}</b><span>entregas</span></div><div class="cifra"><b>${miles(tot)}</b><span>litros</span></div><div class="cifra"><b>${new Set(lista.map(e => e.colonia).filter(Boolean)).size}</b><span>colonias</span></div></div>
+      ${lista.length ? `<div class="leyenda">${ALMAC.map(a => { const l = lista.filter(e => e.almac === a.id); return l.length ? `<span>${a.txt}: <b>${miles(l.reduce((s, e) => s + litrosDe(e), 0))} L</b></span>` : ''; }).join('')}</div>` : ''}
+      ${lista.length && registroURL() ? `<div class="row"><button type="button" class="btn" data-act="enviar"${pend ? '' : ' disabled'}>${pend ? 'Enviar pendientes al registro' : 'Todo enviado al registro'}</button></div>` : ''}
+    </section>
+    <section class="card">
+      <div class="sec-h" style="margin:0"><h3>Tandeo de hoy</h3><button type="button" class="btn ghost" data-go="mapa">Ver mapa</button></div>
+      ${zonasHoyHTML(iso)}
+      <span class="hint">${cortes.length ? `Hoy no tienen servicio las zonas ${cortes.join(', ')}.` : 'Hoy todas las zonas tienen servicio.'} Calendario del SIAPA al ${esc(fCorta(SI.actualizado.slice(0, 10)))}; confírmalo con el SIAPA si hay cambios.</span>
+    </section>
+    <section><div class="sec-h"><h3>Entregas de hoy</h3><span>${registroURL() ? '' : 'Se guardan en este teléfono'}</span></div>
+      <div class="lista">${itemsHoy(iso) || '<div class="empty">Aún no hay entregas hoy. Toca «Entrega a domicilio» al llegar, o «Punto de llenado» si la gente llega a la pipa.</div>'}</div>
+    </section>
+    ${window.AB_VERSION ? `<span class="hint" style="text-align:center">Versión ${esc(window.AB_VERSION)}</span>` : ''}
+  </main>`;
+}
+/* Entregas sueltas y puntos de llenado de hoy, lo más reciente arriba */
+function itemsHoy(iso) {
+  const items = [
+    ...hoyLista().filter(e => !e.punto).map(e => ({ h: e.hora, html: entHTML(e) })),
+    ...DB.puntos.filter(p => p.fecha === iso).map(p => ({ h: p.hora, html: puntoHTML(p) }))
+  ];
+  return items.sort((a, b) => b.h.localeCompare(a.h)).map(x => x.html).join('');
+}
+function puntoHTML(p) {
+  const gente = DB.entregas.filter(e => e.punto === p.id), tot = gente.reduce((s, e) => s + litrosDe(e), 0);
+  const pend = registroURL() && gente.some(e => !e.enviado);
+  return `<article class="ent"><b>${esc(p.lugar || 'Punto de llenado')} · ${miles(tot)} L ${pend ? '<span class="pill pend">Por enviar</span>' : ''}</b>
+    <span class="meta"><span class="mono">${esc(p.hora)}</span><span>Punto de llenado · ${gente.length} ${gente.length === 1 ? 'persona' : 'personas'}</span>${p.colonia ? `<span>Col. ${esc(p.colonia)}</span>` : ''}${(p.fotos || []).length ? `<span>${p.fotos.length} ${p.fotos.length === 1 ? 'foto' : 'fotos'}</span>` : ''}</span>
+    <div class="acts"><button type="button" class="btn" data-punto="${p.id}">Abrir</button></div></article>`;
+}
+function entHTML(e) {
+  return `<article class="ent"><b>${esc(e.tipoLugar === 'lugar' && e.lugar ? e.lugar : (e.recibe || 'Sin nombre'))} · ${miles(litrosDe(e))} L ${registroURL() && !e.enviado ? '<span class="pill pend">Por enviar</span>' : ''}</b>
+    <span class="meta"><span class="mono">${esc(e.hora)}</span>${e.tipoLugar === 'lugar' && e.recibe ? `<span>${esc(e.recibe)}</span>` : ''}<span>${esc(almacTxt(e))}</span>${e.colonia ? `<span>Col. ${esc(e.colonia)}</span>` : ''}${e.zona ? `<span>Zona ${esc(e.zona)}</span>` : ''}${(e.fotos || []).length ? `<span>${e.fotos.length} ${e.fotos.length === 1 ? 'foto' : 'fotos'}</span>` : ''}</span>
+    <div class="acts"><button type="button" class="btn" data-edit="${e.id}">Corregir</button></div></article>`;
+}
+function viewTurno() {
+  const t = DB.turno;
+  return `<div class="topbar"><div class="wrap"><button type="button" class="back" data-go="home" aria-label="Volver">‹</button><h2>Mi turno</h2></div></div>
+  <main class="wrap">
+    <section class="card">
+      <div class="fld"><span class="lbl">Base</span><div class="chips">${BASES.map(b => `<button type="button" class="chip grande" data-base="${b}" aria-pressed="${t.base === b}">${b}</button>`).join('')}</div>
+        ${t.pipa ? `<span class="hint">Pipa <b>${esc(t.pipa)}</b> · ${miles(CAPACIDAD)} L</span>` : ''}</div>
+      <div class="g2"><label class="fld"><span class="lbl">Chofer</span><input data-t="chofer" value="${esc(t.chofer || '')}" placeholder="Nombre" autocomplete="off"></label>
+      <label class="fld"><span class="lbl">Bombero</span><input data-t="bombero" value="${esc(t.bombero || '')}" placeholder="Nombre" autocomplete="off"></label></div>
+    </section>
+  </main>
+  <div class="bar"><div class="wrap"><button type="button" class="btn red big grow" data-go="home">Listo</button></div></div>`;
+}
+function ubicHTML(e) {
+  const z = e.zona, corte = z && sinServicio(z, e.fecha);
+  const estado = { buscando: 'Buscando tu ubicación…', error: 'No se pudo tomar la ubicación. Revisa que el GPS esté prendido y dale permiso a la app.', sin: 'Este teléfono no da la ubicación.' }[S.gps];
+  return `${e.gps ? `<div class="agua"><b>${esc(e.colonia || 'Colonia sin identificar')}</b>${e.municipio ? ', ' + esc(e.municipio) : ''}<br>${z ? `Zona SIAPA ${esc(z)} <span class="pill ${corte ? 'corte' : 'con'}">${corte ? 'Hoy sin servicio' : 'Hoy con servicio'}</span>` : 'Fuera de las zonas del tandeo'}${e.cobertura ? `<br>Cobertura: <b>${esc(e.cobertura)}</b>` : ''}<br><small class="hint">Ubicación tomada (±${e.gps.prec} m)</small></div>` : estado ? `<div class="note">${estado}</div>` : ''}
+    <div class="row"><button type="button" class="btn" data-act="gps">${e.gps ? 'Volver a tomar ubicación' : 'Tomar ubicación'}</button></div>`;
+}
+function pintarUbic() { const el = $('#ubic'), o = S.view === 'punto' ? S.p : S.e; if (el && o) el.innerHTML = ubicHTML(o); }
+function cantidadHTML(e) {
+  const step = (k, v) => `<div class="stepper"><button type="button" data-step="${k}" data-d="-1" aria-label="Uno menos">−</button><output>${v}</output><button type="button" data-step="${k}" data-d="1" aria-label="Uno más">+</button></div>`;
+  if (e.almac === 'garrafon') return `<div class="fld"><span class="lbl">¿Cuántos garrafones? (20 L c/u)</span>${step('cantidad', e.cantidad)}</div>`;
+  if (e.almac === 'tinaco') return `<div class="fld"><span class="lbl">Tamaño del tinaco</span><div class="chips">${TINACOS.map(n => `<button type="button" class="chip grande" data-tam="${n}" aria-pressed="${e.tamano === n}">${miles(n)} L</button>`).join('')}</div>
+      <input data-k="tamanoOtro" inputmode="numeric" placeholder="Otro tamaño, en litros" value="${TINACOS.includes(e.tamano) || !e.tamano ? '' : e.tamano}"></div>
+      <div class="fld"><span class="lbl">¿Cuántos tinacos?</span>${step('cantidad', e.cantidad)}</div>`;
+  if (!e.almac) return '';
+  const cap = CAPACIDAD;
+  const op = e.almac === 'otro' ? [20, 50, 100, 200] : [1000, 2000, 5000];
+  return `<div class="fld"><span class="lbl">${e.almac === 'otro' ? 'Litros entregados (cubetas, tambos…)' : 'Litros que se descargaron de la pipa'}</span>
+    <div class="chips">${op.map(n => `<button type="button" class="chip grande" data-lit="${n}" aria-pressed="${+e.litros === n}">${miles(n)} L</button>`).join('')}${cap && e.almac !== 'otro' ? `<button type="button" class="chip grande" data-lit="${cap}" aria-pressed="${+e.litros === cap}">Toda la carga</button>` : ''}</div>
+    <input data-k="litros" inputmode="numeric" placeholder="Otra cantidad, en litros" value="${op.includes(+e.litros) || +e.litros === cap || !e.litros ? '' : e.litros}"></div>`;
+}
+function viewEntrega() {
+  const e = S.e, edit = DB.entregas.some(x => x.id === e.id);
+  return `<div class="topbar"><div class="wrap"><button type="button" class="back" data-act="cancelar" aria-label="Volver">‹</button><h2>${edit ? 'Corregir entrega' : 'Nueva entrega'}</h2><span class="hint mono">${esc(e.hora)}</span></div></div>
+  <main class="wrap">
+    <section class="card"><div class="sec-h" style="margin:0"><h3>1 · Dónde</h3></div>
+      <div id="ubic">${ubicHTML(e)}</div>
+      <div class="chips"><button type="button" class="chip" data-tl="casa" aria-pressed="${e.tipoLugar === 'casa'}">Casa</button><button type="button" class="chip" data-tl="lugar" aria-pressed="${e.tipoLugar === 'lugar'}">Escuela, institución u otro lugar</button></div>
+      ${e.tipoLugar === 'lugar' ? `<label class="fld"><span class="lbl">Nombre del lugar</span><input data-k="lugar" value="${esc(e.lugar)}" placeholder="Ej. Academia 30, Guardería, CDC 5" autocomplete="off"></label>` : ''}
+      <label class="fld"><span class="lbl">Calle y número</span><input data-k="domicilio" value="${esc(e.domicilio)}" placeholder="Ej. Santiago Guzmán 1565" autocomplete="off"></label>
+      <label class="fld"><span class="lbl">Colonia</span><input id="f-colonia" data-k="colonia" list="dl-colonias" value="${esc(e.colonia)}" placeholder="Sale sola con la ubicación" autocomplete="off"></label>
+    </section>
+    <section class="card"><div class="sec-h" style="margin:0"><h3>2 · Quién recibe</h3></div>
+      <label class="fld"><span class="lbl">Nombre${e.tipoLugar === 'lugar' ? ' y cargo' : ''}</span><input data-k="recibe" value="${esc(e.recibe)}" placeholder="${e.tipoLugar === 'lugar' ? 'Ej. Leticia Castillo, encargada' : 'Nombre completo'}" autocomplete="off" autocapitalize="words"></label>
+      <label class="fld"><span class="lbl">Teléfono <em>(opcional)</em></span><input data-k="telefono" type="tel" inputmode="tel" value="${esc(e.telefono)}" placeholder="10 dígitos" autocomplete="off"></label>
+    </section>
+    <section class="card"><div class="sec-h" style="margin:0"><h3>3 · Qué se llenó</h3></div>
+      <div class="chips">${ALMAC.filter(a => !a.soloPunto).map(a => `<button type="button" class="chip grande" data-almac="${a.id}" aria-pressed="${e.almac === a.id}">${a.txt}</button>`).join('')}</div>
+      <div id="cant">${cantidadHTML(e)}</div>
+      <div class="total"><span>Total</span><b id="tot">${miles(litrosDe(e))} L</b></div>
+    </section>
+    <section class="card"><div class="sec-h" style="margin:0"><h3>4 · Foto <em class="hint">(opcional)</em></h3></div>${fotosHTML(e.fotos, 'e')}</section>
+    <label class="fld"><span class="lbl">Notas <em>(opcional)</em></span><textarea data-k="notas" placeholder="Algo que deba saber la coordinación">${esc(e.notas)}</textarea></label>
+    ${edit ? '<div class="row"><button type="button" class="btn ghost" data-act="borrar" style="color:var(--red)">Borrar esta entrega</button></div>' : ''}
+  </main>
+  <datalist id="dl-colonias"></datalist>
+  <div class="bar"><div class="wrap"><button type="button" class="btn red big grow" data-act="guardar">Guardar</button>${edit ? '' : '<button type="button" class="btn big" data-act="guardarotra">Guardar y otra aquí</button>'}</div></div>`;
+}
+const LIT_PUNTO = [20, 50, 100, 200];
+function viewPunto() {
+  const p = S.p, f = S.pf, gente = DB.entregas.filter(e => e.punto === p.id), tot = gente.reduce((s, e) => s + litrosDe(e), 0);
+  return `<div class="topbar"><div class="wrap"><button type="button" class="back" data-act="salirpunto" aria-label="Volver">‹</button><h2>Punto de llenado</h2><span class="hint mono">${esc(p.hora)}</span></div></div>
+  <main class="wrap">
+    <section class="card"><div class="sec-h" style="margin:0"><h3>1 · Dónde</h3></div>
+      <div id="ubic">${ubicHTML(p)}</div>
+      <label class="fld"><span class="lbl">Nombre del punto</span><input data-pk="lugar" value="${esc(p.lugar)}" placeholder="Ej. Parque El Cuadro, unidad deportiva" autocomplete="off"></label>
+      <label class="fld"><span class="lbl">Colonia</span><input id="f-colonia" data-pk="colonia" list="dl-colonias" value="${esc(p.colonia)}" placeholder="Sale sola con la ubicación" autocomplete="off"></label>
+      <div class="fld"><span class="lbl">Fotos del punto <em>(opcional)</em></span>${fotosHTML(p.fotos, 'p')}</div>
+    </section>
+    <section class="card" id="nueva-persona"><div class="sec-h" style="margin:0"><h3>2 · Agregar persona</h3></div>
+      <label class="fld"><span class="lbl">Nombre</span><input id="pf-recibe" data-pf="recibe" value="${esc(f.recibe)}" placeholder="Nombre completo" autocomplete="off" autocapitalize="words"></label>
+      <label class="fld"><span class="lbl">Domicilio</span><input data-pf="domicilio" value="${esc(f.domicilio)}" placeholder="Ej. Amado Camarena 2234" autocomplete="off"></label>
+      <label class="fld"><span class="lbl">Teléfono <em>(opcional)</em></span><input data-pf="telefono" type="tel" inputmode="tel" value="${esc(f.telefono)}" placeholder="10 dígitos" autocomplete="off"></label>
+      <div class="fld"><span class="lbl">Litros que se llevó</span><div class="chips">${LIT_PUNTO.map(n => `<button type="button" class="chip grande" data-plit="${n}" aria-pressed="${+f.litros === n}">${n} L</button>`).join('')}</div>
+        <input id="pf-litros" data-pf="litros" inputmode="numeric" placeholder="Otra cantidad, en litros" value="${LIT_PUNTO.includes(+f.litros) || !f.litros ? '' : f.litros}"></div>
+      <button type="button" class="btn red big" data-act="agregarpersona">+ Agregar persona</button>
+    </section>
+    <section><div class="sec-h"><h3>Personas atendidas</h3><span>${gente.length} · ${miles(tot)} L</span></div>
+      <div class="lista">${gente.length ? gente.slice().reverse().map(e => `<article class="ent"><b>${esc(e.recibe)} · ${miles(litrosDe(e))} L ${registroURL() && !e.enviado ? '<span class="pill pend">Por enviar</span>' : ''}</b>
+        <span class="meta"><span class="mono">${esc(e.hora)}</span>${e.domicilio ? `<span>${esc(e.domicilio)}</span>` : ''}${e.telefono ? `<span>${esc(e.telefono)}</span>` : ''}</span>
+        <div class="acts"><button type="button" class="btn ghost" data-quitapersona="${e.id}">Quitar</button></div></article>`).join('') : '<div class="empty">Agrega a cada persona conforme se le llenan sus recipientes.</div>'}</div>
+    </section>
+  </main>
+  <datalist id="dl-colonias"></datalist>
+  <div class="bar"><div class="wrap"><button type="button" class="btn big grow" data-act="salirpunto">Terminar punto</button></div></div>`;
+}
+const DATOS_PUNTO = ['lugar', 'colonia', 'municipio', 'zona', 'cobertura', 'gps'];
+function nuevoPunto() { return { id: uid(), fecha: hoyIso(), hora: ahora(), lugar: '', colonia: '', municipio: '', zona: '', cobertura: '', gps: null, fotos: [] }; }
+function abrirPunto(p) { S.p = p; S.e = null; S.pf = { recibe: '', domicilio: '', telefono: '', litros: 0 }; S.gps = p.gps ? 'ok' : 'nada'; S.view = 'punto'; render(); if (!p.gps) tomarGPS(p); }
+/* Al salir del punto, sus personas toman el nombre, la colonia y la ubicación finales del punto */
+function cerrarPunto() {
+  const p = S.p, gente = DB.entregas.filter(e => e.punto === p.id);
+  gente.forEach(e => { DATOS_PUNTO.forEach(k => { if (JSON.stringify(e[k]) !== JSON.stringify(p[k])) { e[k] = p[k]; e.enviado = false; } }); if (e.lugar !== p.lugar) { e.lugar = p.lugar; e.enviado = false; } });
+  if (!gente.length && !(p.fotos || []).length) DB.puntos = DB.puntos.filter(x => x.id !== p.id);
+  guardar(); enviarPendientes(true);
+  S.p = null; S.view = 'home'; render();
+}
+function quitarFotos(ids) { ids.forEach(id => { if (DB.fotos[id] && !DB.fotos[id].subida) { delete DB.fotos[id]; fotoDel(id).catch(() => {}); } }); }
+function faltan(e) {
+  const f = [];
+  if (!e.recibe.trim()) f.push('quién recibe');
+  if (!e.almac) f.push('qué se llenó');
+  if (!litrosDe(e)) f.push('los litros');
+  if (!e.gps && !e.domicilio.trim() && !(e.tipoLugar === 'lugar' && e.lugar.trim())) f.push('el domicilio o la ubicación');
+  return f;
+}
+function viewMapa() {
+  const iso = hoyIso();
+  return `<div class="topbar"><div class="wrap"><button type="button" class="back" data-go="home" aria-label="Volver">‹</button><h2>Tandeo y entregas</h2></div></div>
+  <main class="wrap">
+    <div id="mapa" class="mapa alto" role="application" aria-label="Mapa de zonas del tandeo y entregas"></div>
+    <div class="leyenda">${SI.zonas.slice().sort((a, b) => a.z - b.z).map(z => `<span class="ley"><i style="background:${z.color};opacity:${sinServicio(z.z, iso) ? 1 : .35}"></i>Zona ${z.z}${sinServicio(z.z, iso) ? ' · sin servicio' : ''}</span>`).join('')}<span class="ley"><i class="dot" style="background:#1E6FD9;border:2px solid #fff;box-shadow:0 0 0 1px #1E6FD9"></i>Entrega</span><span class="ley"><i class="dot" style="background:#5AA0F2"></i>Garza</span><span class="ley"><i class="dot" style="background:#C3132B"></i>Base</span>${[1, 2, 3, 4, 5].map(b => `<span class="ley"><i style="border:3px solid ${COLOR_BASE[b]};background:transparent"></i>Cobertura Base ${b}</span>`).join('')}</div>
+    ${registroURL() ? `<div class="row"><button type="button" class="btn" data-act="todas" aria-pressed="${S.verTodas}">${S.verTodas ? 'Ver solo mis entregas' : 'Ver las de todas las pipas'}</button><span class="hint" id="todas-estado"></span></div>` : ''}
+    <span class="hint">Las zonas en color fuerte no tienen servicio hoy (${esc(titulo(DIA_TXT[diaDe(iso)]))}). Los contornos son las coberturas de cada base (punteado: módulos). El color de relleno es la zona del tandeo, solo dentro de Guadalajara. Toca una zona para ver sus días de corte.</span>
+  </main>`;
+}
+
+/* ============ Mapa ============ */
+function cargarLeaflet() {
+  if (window.L) return Promise.resolve();
+  return new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+}
+async function pintarMapa() {
+  const el = $('#mapa'); if (!el) return;
+  try { await cargarLeaflet(); } catch (err) { el.innerHTML = '<div class="empty">No se pudo cargar el mapa. Revisa tu conexión.</div>'; return; }
+  if (!el.isConnected) return;
+  if (S.mapa) { try { S.mapa.remove(); } catch (err) {} }
+  const m = L.map(el).setView([20.67, -103.35], 11); S.mapa = m;
+  /* Abierta como archivo, algunos servidores bloquean sus mapas: ahí se empieza con Esri. Se puede cambiar y se recuerda */
+  const fondos = {
+    'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }),
+    'OSM Francia': L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', { subdomains: 'abc', maxZoom: 20, attribution: '© OpenStreetMap France · © OpenStreetMap' }),
+    'Esri': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Mapa © Esri' })
+  };
+  (fondos[DB.cfg.fondoMapa] || fondos[location.protocol === 'file:' ? 'Esri' : 'OpenStreetMap']).addTo(m);
+  L.control.layers(fondos, null, { collapsed: innerWidth < 700 }).addTo(m);
+  m.on('baselayerchange', ev => { DB.cfg.fondoMapa = ev.name; guardar(); });
+  const iso = hoyIso(), tandeo = L.featureGroup().addTo(m), cober = L.featureGroup().addTo(m);
+  /* Zonas del tandeo: solo relleno. Coberturas de bases y módulos: solo contorno, con el color de la base, como en Toma datos */
+  SI.zonas.forEach(z => {
+    const corte = sinServicio(z.z, iso);
+    L.polygon(z.p.map(p => p.map(anilloLL)), { stroke: false, fillColor: z.color, fillOpacity: corte ? .45 : .12 })
+      .bindPopup(`<b>Zona ${z.z} · ${esc(z.nombre)}</b><br>Sin servicio: ${esc(diasTxt(z.z))}<br>${corte ? '<b>Hoy sin servicio</b>' : 'Hoy con servicio'}`).addTo(tandeo);
+  });
+  SI.coberturas.forEach(c => L.polygon(c.p.map(r => [anilloLL(r)]), { color: COLOR_BASE[c.base], weight: c.modulo ? 2 : 3.5, dashArray: c.modulo ? '6 5' : null, fill: false })
+    .bindTooltip(c.nombre, { sticky: true }).addTo(cober));
+  L.control.layers(null, { 'Zonas del tandeo': tandeo, 'Coberturas de bases y módulos': cober }, { collapsed: innerWidth < 700, position: 'bottomleft' }).addTo(m).getContainer().classList.add('capas');
+  /* Perímetro de las coberturas de Guadalajara: las zonas del SIAPA ya vienen recortadas a él */
+  const per = L.polygon(SI.perimetro.map(p => p.map(anilloLL)), { stroke: false, fill: false, interactive: false }).addTo(m);
+  SI.garzas.forEach(g => L.circleMarker(g.pos, { radius: 6, color: '#1E6FD9', weight: 2, fillColor: '#5AA0F2', fillOpacity: .95 }).bindPopup(`<b>${esc(g.nombre)}</b>${g.dir ? '<br>' + esc(g.dir) : ''}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${g.pos.join(',')}" target="_blank" rel="noopener">Cómo llegar</a>`).addTo(m));
+  SI.bases.forEach(b => L.circleMarker(b.pos, { radius: b.tipo === 'base' ? 8 : 5, color: '#fff', weight: 2, fillColor: '#C3132B', fillOpacity: 1 }).bindTooltip(b.nombre.replace('Módulo ', ''), { direction: 'right' }).addTo(m));
+  m.createPane('entregas').style.zIndex = 660;
+  S.capa = L.layerGroup().addTo(m);
+  pintarEntregas();
+  m.fitBounds(per.getBounds(), { padding: [10, 10] });
+}
+function pintarEntregas() {
+  if (!S.capa) return;
+  S.capa.clearLayers();
+  const puntos = DB.puntos.filter(p => p.fecha === hoyIso() && p.gps).map(p => {
+    const gente = DB.entregas.filter(e => e.punto === p.id);
+    return { p: [p.gps.lat, p.gps.lon], html: `<b>${esc(p.lugar || 'Punto de llenado')}</b><br>Punto de llenado · ${gente.length} ${gente.length === 1 ? 'persona' : 'personas'}<br><b>${miles(gente.reduce((s, e) => s + litrosDe(e), 0))} L</b>` };
+  });
+  const mias = hoyLista().filter(e => e.gps && !e.punto).map(e => ({ p: [e.gps.lat, e.gps.lon], html: `<b>${esc(e.tipoLugar === 'lugar' && e.lugar ? e.lugar : e.recibe)}</b><br>${esc(e.hora)} · ${esc(almacTxt(e))}<br><b>${miles(litrosDe(e))} L</b>` }));
+  const coords = x => (String(x['Ubicación'] || '').match(/q=(-?[\d.]+),(-?[\d.]+)/) || []).slice(1).map(Number);
+  const otras = S.verTodas && S.todas ? S.todas.filter(x => coords(x).length === 2 && !DB.entregas.some(e => e.id === x.id)).map(x => ({ p: coords(x), html: `<b>Pipa ${esc(x.Pipa)}</b> · ${esc(x.Hora)}<br>${esc(x['Lugar o institución'] || x.Colonia)}<br>${esc(x.Almacenamiento)} · <b>${miles(x.Litros)} L</b>` })) : [];
+  [...mias, ...puntos, ...otras].forEach(x => L.circleMarker(x.p, { pane: 'entregas', radius: 7, color: '#fff', weight: 2, fillColor: '#1E6FD9', fillOpacity: 1 }).bindPopup(x.html).addTo(S.capa));
+}
+async function cargarTodas() {
+  const el = $('#todas-estado'); if (el) el.textContent = 'Cargando…';
+  try {
+    const r = await fetch(`${registroURL()}?clave=${encodeURIComponent(registroClave())}&fecha=${encodeURIComponent(fLarga(hoyIso()))}`);
+    const o = await r.json(); if (!o.ok) throw new Error(o.error);
+    S.todas = o.entregas; if (el) el.textContent = `${o.entregas.length} entregas de todas las pipas hoy.`;
+  } catch (err) { S.todas = null; if (el) el.textContent = 'No se pudieron traer las del registro.'; }
+  pintarEntregas();
+}
+
+/* ============ Render y eventos ============ */
+function render(arriba = true) {
+  $('#app').innerHTML = S.view === 'turno' ? viewTurno() : S.view === 'entrega' ? viewEntrega() : S.view === 'punto' ? viewPunto() : S.view === 'mapa' ? viewMapa() : viewHome();
+  if (S.view === 'mapa') pintarMapa(); else if (S.mapa) { try { S.mapa.remove(); } catch (err) {} S.mapa = null; S.capa = null; }
+  if (S.view === 'entrega' || S.view === 'punto') llenarColonias();
+  hidratarFotos();
+  historial();
+  if (arriba) window.scrollTo(0, 0);
+}
+/* Botón «atrás» del teléfono: desde una pantalla interna regresa al inicio en vez de cerrar la app */
+let volviendo = false;
+function historial() {
+  const sub = S.view !== 'home', hay = history.state && history.state.sub;
+  if (sub && !hay) history.pushState({ sub: 1 }, '');
+  else if (!sub && hay) { volviendo = true; history.back(); }
+}
+window.addEventListener('popstate', () => {
+  if (volviendo) { volviendo = false; return; }
+  if (S.view === 'punto' && S.p) { cerrarPunto(); return; }
+  if (S.view === 'entrega' && S.e) {
+    const e = S.e, guardada = DB.entregas.some(x => x.id === e.id);
+    if (!guardada && (e.recibe.trim() || e.domicilio.trim()) && !confirm('¿Salir sin guardar esta entrega?')) { history.pushState({ sub: 1 }, ''); return; }
+    const b = document.querySelector('[data-act=cancelar]'); if (b) { b.click(); return; }
+  }
+  S.view = 'home'; render();
+});
+/* En la app Android el botón «atrás» lo recibe Capacitor: en el inicio cierra la app, en lo demás regresa */
+const appNativa = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+if (appNativa) appNativa.addListener('backButton', () => { if (S.view === 'home') appNativa.exitApp(); else history.back(); });
+function llenarColonias() {
+  const dl = $('#dl-colonias'); if (!dl || dl.childElementCount) return;
+  const nombres = [...new Set(SI.colonias.n.filter((n, i) => /guadalajara|tlaquepaque|tonal|zapopan/i.test(SI.colonias.m[i])).map(titulo))].sort((a, b) => a.localeCompare(b, 'es'));
+  dl.innerHTML = nombres.map(n => `<option value="${esc(n)}">`).join('');
+}
+function abrirEntrega(e) { S.e = e; S.gps = e.gps ? 'ok' : 'nada'; S.view = 'entrega'; render(); if (!e.gps) tomarGPS(e); }
+function refrescarCant() { const e = S.e, c = $('#cant'); if (c) c.innerHTML = cantidadHTML(e); const t = $('#tot'); if (t) t.textContent = miles(litrosDe(e)) + ' L'; }
+const app = $('#app');
+app.addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  const ds = b.dataset, e = S.e, t = DB.turno;
+  if (ds.go) { S.view = ds.go; render(); return; }
+  if ((ds.act === 'nueva' || ds.act === 'punto') && !t.pipa) { S.view = 'turno'; render(); toast('Primero elige tu base'); return; }
+  if (ds.act === 'nueva') { abrirEntrega(nuevaEntrega(false)); return; }
+  if (ds.act === 'punto') { const p = nuevoPunto(); DB.puntos.push(p); guardar(); abrirPunto(p); return; }
+  if (ds.punto) { const p = DB.puntos.find(x => x.id === ds.punto); if (p) abrirPunto(p); return; }
+  if (ds.tomarfoto) { S.fotoPara = ds.tomarfoto; $('#foto-in').value = ''; $('#foto-in').click(); return; }
+  if (ds.quitafoto) {
+    const o = ds.para === 'p' ? S.p : S.e; if (!o) return;
+    o.fotos = (o.fotos || []).filter(id => id !== ds.quitafoto);
+    if (ds.para === 'p') { quitarFotos([ds.quitafoto]); guardar(); }
+    render(false); return;
+  }
+  if (S.view === 'punto' && S.p) {
+    const p = S.p, f = S.pf;
+    if (ds.act === 'gps') { tomarGPS(p); return; }
+    if (ds.plit) { f.litros = +ds.plit; app.querySelectorAll('[data-plit]').forEach(c => c.setAttribute('aria-pressed', c === b)); $('#pf-litros').value = ''; return; }
+    if (ds.act === 'agregarpersona') {
+      if (!f.recibe.trim()) { toast('Escribe el nombre'); $('#pf-recibe').focus(); return; }
+      if (!p.zona && p.colonia) p.zona = zonaPorColonia(p.colonia);
+      const e = { id: uid(), fecha: p.fecha, hora: ahora(), tipoLugar: 'lugar', lugar: p.lugar, domicilio: f.domicilio.trim(), recibe: f.recibe.trim(), telefono: f.telefono.trim(),
+        almac: 'recipientes', cantidad: 1, tamano: 0, litros: +f.litros || 0, notas: '', fotos: [], punto: p.id, enviado: false };
+      DATOS_PUNTO.forEach(k => { e[k] = p[k]; });
+      DB.entregas.push(e); guardar(); enviarPendientes(true);
+      S.pf = { recibe: '', domicilio: '', telefono: '', litros: f.litros };
+      render(false); toast(`${e.recibe} agregada`); const n = $('#pf-recibe'); if (n) { n.scrollIntoView({ block: 'center' }); n.focus(); }
+      return;
+    }
+    if (ds.quitapersona) {
+      const x = DB.entregas.find(y => y.id === ds.quitapersona); if (!x || !confirm(`¿Quitar a ${x.recibe}?`)) return;
+      DB.entregas = DB.entregas.filter(y => y !== x); if (x.enviado) DB.borrar.push({ id: x.id, fecha: fLarga(x.fecha) });
+      guardar(); enviarPendientes(true); render(false); return;
+    }
+    if (ds.act === 'salirpunto') { cerrarPunto(); return; }
+  }
+  if (ds.edit) { const x = DB.entregas.find(y => y.id === ds.edit); if (x) abrirEntrega(JSON.parse(JSON.stringify(x))); return; }
+  if (ds.act === 'enviar') { enviarPendientes(false); return; }
+  if (ds.act === 'todas') { S.verTodas = !S.verTodas; b.setAttribute('aria-pressed', S.verTodas); b.textContent = S.verTodas ? 'Ver solo mis entregas' : 'Ver las de todas las pipas'; if (S.verTodas) cargarTodas(); else { const el = $('#todas-estado'); if (el) el.textContent = ''; pintarEntregas(); } return; }
+  if (ds.base) { t.base = ds.base; t.pipa = PIPA_DE[ds.base]; guardar(); render(false); return; }
+  if (!e) return;
+  if (ds.act === 'gps') { tomarGPS(e); return; }
+  if (ds.tl) { e.tipoLugar = ds.tl; render(false); return; }
+  if (ds.almac) { e.almac = ds.almac; e.cantidad = e.cantidad || 1; if (ds.almac === 'tinaco' && !e.tamano) e.tamano = 0; refrescarCant(); app.querySelectorAll('[data-almac]').forEach(x => x.setAttribute('aria-pressed', x.dataset.almac === e.almac)); return; }
+  if (ds.tam) { e.tamano = +ds.tam; refrescarCant(); return; }
+  if (ds.lit) { e.litros = +ds.lit; refrescarCant(); return; }
+  if (ds.step) { e[ds.step] = Math.max(1, (e[ds.step] || 1) + +ds.d); refrescarCant(); return; }
+  if (ds.act === 'cancelar') {
+    const guardada = DB.entregas.find(x => x.id === e.id);
+    quitarFotos((e.fotos || []).filter(id => !(guardada && (guardada.fotos || []).includes(id)))); // fotos tomadas y no guardadas
+    S.e = null; S.view = 'home'; render(); return;
+  }
+  if (ds.act === 'borrar') {
+    if (!confirm('¿Borrar esta entrega?')) return;
+    const x = DB.entregas.find(y => y.id === e.id);
+    DB.entregas = DB.entregas.filter(y => y.id !== e.id); quitarFotos(e.fotos || []);
+    if (x && x.enviado) DB.borrar.push({ id: x.id, fecha: fLarga(x.fecha) });
+    guardar(); enviarPendientes(true); S.e = null; S.view = 'home'; render(); toast('Entrega borrada'); return;
+  }
+  if (ds.act === 'guardar' || ds.act === 'guardarotra') {
+    const f = faltan(e);
+    if (f.length && !confirm(`Falta ${f.join(', ')}. ¿Guardar así?`)) return;
+    if (!e.zona && e.colonia) e.zona = zonaPorColonia(e.colonia);
+    const i = DB.entregas.findIndex(x => x.id === e.id);
+    if (i >= 0) { quitarFotos((DB.entregas[i].fotos || []).filter(id => !(e.fotos || []).includes(id))); e.enviado = false; DB.entregas[i] = e; } else DB.entregas.push(e);
+    guardar(); enviarPendientes(true);
+    if (ds.act === 'guardarotra') { abrirEntrega(nuevaEntrega(true)); toast('Guardada. Sigue con la siguiente'); }
+    else { S.e = null; S.view = 'home'; render(); toast('Entrega guardada'); }
+  }
+});
+app.addEventListener('input', ev => {
+  const x = ev.target, ds = x.dataset;
+  if (ds.t) { DB.turno[ds.t] = x.value.trim(); guardar(); return; }
+  if (ds.pk && S.p) { S.p[ds.pk] = x.value; if (ds.pk === 'colonia' && !S.p.gps) S.p.zona = zonaPorColonia(x.value); guardar(); return; }
+  if (ds.pf && S.pf) { if (ds.pf === 'litros') { S.pf.litros = +x.value.replace(/\D/g, '') || 0; app.querySelectorAll('[data-plit]').forEach(c => c.setAttribute('aria-pressed', 'false')); } else S.pf[ds.pf] = x.value; return; }
+  const e = S.e; if (!e || !ds.k) return;
+  if (ds.k === 'tamanoOtro') { e.tamano = +x.value.replace(/\D/g, '') || 0; app.querySelectorAll('[data-tam]').forEach(c => c.setAttribute('aria-pressed', 'false')); }
+  else if (ds.k === 'litros') { e.litros = +x.value.replace(/\D/g, '') || 0; app.querySelectorAll('[data-lit]').forEach(c => c.setAttribute('aria-pressed', 'false')); }
+  else { e[ds.k] = x.value; if (ds.k === 'colonia' && !e.gps) e.zona = zonaPorColonia(x.value); }
+  const tt = $('#tot'); if (tt) tt.textContent = miles(litrosDe(e)) + ' L';
+});
+
+/* Foto tomada con la cámara: se reduce, se guarda en el teléfono y se liga a la entrega o al punto abierto */
+$('#foto-in').addEventListener('change', async ev => {
+  const file = ev.target.files && ev.target.files[0], o = S.fotoPara === 'p' ? S.p : S.e; if (!file || !o) return;
+  try {
+    const data = await comprimir(file), id = uid();
+    fotoCache[id] = data;
+    try { await fotoPut(id, data); } catch (err) { toast('La foto no se pudo guardar en el teléfono; mándala antes de cerrar'); }
+    DB.fotos[id] = { subida: false, url: '' };
+    o.fotos = [...(o.fotos || []), id];
+    guardar(); render(false);
+    if (S.fotoPara === 'p') enviarPendientes(true);
+  } catch (err) { toast('No se pudo leer la foto'); }
+});
+
+cargar(); render(); enviarPendientes(true);
+</script>

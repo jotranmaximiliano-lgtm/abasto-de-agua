@@ -1,0 +1,23 @@
+# Repositorio público: aquí no entra nada con datos de ciudadanos ni claves.
+
+# Chat del grupo (nombres, domicilios y teléfonos) y documentos de trabajo
+Chat WhatsApp/
+*.pdf
+
+# Enlace y clave del registro, y el script ya con la clave
+registro-enlace.txt
+registro-apps-script.listo.gs
+
+# Llave de firma de la app Android (respáldala aparte, en privado)
+*.jks
+*.keystore
+keystore.properties
+
+# Lo que se genera al armar las apps (lleva la clave del registro adentro)
+app-abasto/
+web-abasto/
+*.apk
+android-abasto/www/
+android-abasto/node_modules/
+
+__pycache__/

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primer plano del ícono adaptable: el escudo con margen para que no lo recorte la forma del lanzador -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/escudo"
+    android:inset="18%" />
